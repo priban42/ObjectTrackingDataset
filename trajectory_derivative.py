@@ -68,12 +68,7 @@ def main():
     last_time = 0
     time_sum = 0
     for point in plan:
-
-        if last_time > point["nsecs"] / 1000000000:
-            time_sum += 1#last_time
-        times.append(time_sum + point["nsecs"] / 1000000000)
-        #print(time_sum + point["nsecs"] / 1000000000)
-        last_time = point["nsecs"] / 1000000000
+        times.append(point["secs"] + point["nsecs"] / 1000000000)
 
     for i in range(7):
         single_joint = []
@@ -95,11 +90,11 @@ def main():
 
     fig, axs = plt.subplots(2, 3)
     for i in range(1):
-        axs[i, 0].plot(times, joint_pos[i], ".")
+        axs[i, 0].plot(times, joint_pos[i])
     for i in range(1):
-        axs[i, 1].plot(times, joint_vel[i], ".")
+        axs[i, 1].plot(times, joint_vel[i])
     for i in range(1):
-        axs[i, 2].plot(times, joint_acc[i], ".")
+        axs[i, 2].plot(times, joint_acc[i])
     axs[0, 0].set_title("positions")
     axs[0, 1].set_title("velocities")
     axs[0, 2].set_title("accelerations")
@@ -108,18 +103,18 @@ def main():
     der1_smooth = []
     der2 = []
     for i in range(len(joint_pos[0])):
-        der0.append(moving_average(joint_pos[0], times, i, 30, 200))
+        der0.append(moving_average(joint_pos[0], times, i, 10, 200))
     for i in range(len(joint_pos[0])):
         der1.append(derivative(der0, times, i))
         #der1.append(derivative(joint_pos[0], times, i))
     for i in range(len(der1)):
-        der1_smooth.append(moving_average(der1, times, i, 5, 100))
+        der1_smooth.append(moving_average(der1, times, i, 5, 200))
     for i in range(len(der1)):
         der2.append(derivative(der1_smooth, times, i))
         #der2.append(derivative(der1, times, i))
-    axs[1, 0].plot(times, der0, ".")
-    axs[1, 1].plot(times, der1, ".")
-    axs[1, 2].plot(times, der2, ".")
+    axs[1, 0].plot(times, der0)
+    axs[1, 1].plot(times, der1_smooth)
+    axs[1, 2].plot(times, der2)
     #plt.plot(times, pos0)
     plt.show()
 
