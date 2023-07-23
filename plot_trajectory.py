@@ -37,7 +37,7 @@ def main():
     for point in plan:
 
         if last_time > point["nsecs"] / 1000000000:
-            time_sum += last_time
+            time_sum += 1
         times.append(time_sum + point["nsecs"] / 1000000000)
         print(time_sum + point["nsecs"] / 1000000000)
         last_time = point["nsecs"] / 1000000000
