@@ -4,8 +4,8 @@ import matplotlib.pyplot as plt
 import matplotlib
 matplotlib.use("tkAgg")
 NUMBER = 0
-#PATH = "C:\\Users\\Vojta\\PycharmProjects\\ObjectTrackingDataset\\dataset\\trajectory_" + str(NUMBER)
-PATH = "/home/bagr/PycharmProjects/ObjectTrackingDataset/dataset/trajectory_" + str(NUMBER)
+PATH = "C:\\Users\\Vojta\\PycharmProjects\\ObjectTrackingDataset\\dataset\\trajectory_" + str(NUMBER)
+#PATH = "/home/bagr/PycharmProjects/ObjectTrackingDataset/dataset/trajectory_" + str(NUMBER)
 def import_plan(name="robot_trajectory.p"):
     file_path = os.path.join(PATH, name)
     with open(file_path, 'rb') as file_open:
@@ -37,7 +37,7 @@ def main():
     for point in plan:
 
         if last_time > point["nsecs"] / 1000000000:
-            time_sum += last_time
+            time_sum += 1
         times.append(time_sum + point["nsecs"] / 1000000000)
         print(time_sum + point["nsecs"] / 1000000000)
         last_time = point["nsecs"] / 1000000000

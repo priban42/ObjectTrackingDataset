@@ -5,8 +5,8 @@ import matplotlib
 import numpy as np
 matplotlib.use("tkAgg")
 NUMBER = 0
-#PATH = "C:\\Users\\Vojta\\PycharmProjects\\ObjectTrackingDataset\\dataset\\trajectory_" + str(NUMBER)
-PATH = "/home/bagr/PycharmProjects/ObjectTrackingDataset/dataset/trajectory_" + str(NUMBER)
+PATH = "C:\\Users\\Vojta\\PycharmProjects\\ObjectTrackingDataset\\dataset\\trajectory_" + str(NUMBER)
+#PATH = "/home/bagr/PycharmProjects/ObjectTrackingDataset/dataset/trajectory_" + str(NUMBER)
 def import_plan(name="robot_trajectory.p"):
     file_path = os.path.join(PATH, name)
     with open(file_path, 'rb') as file_open:
