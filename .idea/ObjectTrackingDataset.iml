@@ -6,7 +6,7 @@
     </content>
     <content url="file://$USER_HOME$/ws_moveit/src/calibration_eyeinhand_ros_pkg" />
     <content url="file://$USER_HOME$/ws_moveit/src/my_tests" />
-    <orderEntry type="jdk" jdkName="Python 3.9 (ObjectTrackingDataset)" jdkType="Python SDK" />
+    <orderEntry type="jdk" jdkName="Python 3.11 (ObjectTrackingDataset)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
 </module>
