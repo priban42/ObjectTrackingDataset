@@ -9,4 +9,4 @@ Tutorial for using the blender files (shared on google drive).
 
 # my_test
 A test ros package used for generating and executing robot trajectories from blender_camera_trajectory.csv.
-(Work in progress, very much not polished.)
+(very much not polished.)
