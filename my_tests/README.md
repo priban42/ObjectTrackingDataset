@@ -1,1 +1,1 @@
-Use the scripts/test1.py file for generating the joint-space trajectories from camera trajectories made in blender. Before running test1.py, launch **roslaunch panda_moveit_config demo.launch** in a moveit workspace.
+Use the scripts/test1.py file for generating the joint-space trajectories from camera trajectories made in blender. Before running test1.py, launch ```roslaunch panda_moveit_config demo.launch``` in a moveit workspace.
