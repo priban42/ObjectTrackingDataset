@@ -369,7 +369,7 @@ class MoveGroupPythonInterfaceTutorial(object):
             pickle.dump(reduced_plan, file_save)
 
     def import_plan(self, name="tmp_plan.p"):
-        file_path = os.path.join("/home/bagr/ws_moveit/src/my_tests/saved_paths", name)
+        file_path = os.path.join("/saved_paths", name)
         with open(file_path, 'rb') as file_open:
             loaded_plan = pickle.load(file_open)
         return loaded_plan
