@@ -4,10 +4,11 @@
     <content url="file://$MODULE_DIR$">
       <sourceFolder url="file://$MODULE_DIR$/predef" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/venv" />
+      <excludeFolder url="file://$MODULE_DIR$/venv39" />
     </content>
     <content url="file://$USER_HOME$/ws_moveit/src/calibration_eyeinhand_ros_pkg" />
     <content url="file://$USER_HOME$/ws_moveit/src/my_tests" />
-    <orderEntry type="jdk" jdkName="Python 3.10 (ObjectTrackingDataset)" jdkType="Python SDK" />
+    <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
 </module>
