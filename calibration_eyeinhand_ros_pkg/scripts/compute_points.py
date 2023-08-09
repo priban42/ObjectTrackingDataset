@@ -99,6 +99,7 @@ def main():
             beta_x = point['beta']*np.sin(point['alpha'])
             beta_y = -1*point['beta']*np.cos(point['alpha'])
             q = tft.quaternion_from_euler(base_xyz[0], base_xyz[1]+beta_y, base_xyz[2]+beta_x  + point['orientation'], 'rxyz')
+            print(q)
             pose = np.array([x, y, z, q[0], q[1], q[2], q[3]])
         elif point['type']=='plain':
             x = point['center'][0] + point['offset'][0]
