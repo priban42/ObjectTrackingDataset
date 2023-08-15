@@ -108,7 +108,8 @@ class RefinementRobotWorldHandEye:
     """
 
 
-    def __init__(self, T_gc_init, T_bt_init, T_bg_lst, cam_mtx, dist_coef, all_ch_points, all_ch_corners):
+    def __init__(self, T_gc_init, T_bt_init, T_bg_lst,
+                 joint_values_lst, cam_mtx, dist_coef, all_ch_points, all_ch_corners, joint_to_refine):
         # Initial guess
         self.T_gc_init = T_gc_init
         self.T_bt_init = T_bt_init
@@ -120,6 +121,8 @@ class RefinementRobotWorldHandEye:
 
         # Data 
         self.T_bg_lst = T_bg_lst
+        self.joint_values_lst = joint_values_lst
+        self.joint_to_refine = joint_to_refine
         self.T_gb_lst = [T_bg.inverse() for T_bg in T_bg_lst]
         self.pts = all_ch_points
         self.corners = all_ch_corners
@@ -128,6 +131,11 @@ class RefinementRobotWorldHandEye:
 
         # Compute size of the residual
         self.Nres = sum(2*len(pts_one_pose) for pts_one_pose in self.pts)
+
+        urdf_filename = 'panda.urdf'
+        self.panda_model = pin.buildModelFromUrdf(urdf_filename)
+        self.panda_data = self.panda_model.createData()
+        self.panda_hand_id = self.panda_model.getFrameId('panda_hand')
 
     def func(self, x):
         """
@@ -142,14 +150,30 @@ class RefinementRobotWorldHandEye:
         """
 
         T_gc, T_bt = self.get_transforms(x)
+        #T_gc = self.T_gc_init
+        #T_bt = self.T_bt_init
+
         T_cg = T_gc.inverse()
 
         res = np.zeros(self.Nres)
 
         index_ij = 0
+        #joint_offset = np.array([x[12], 0, 0, 0, 0, 0, 0, 0, 0])*10
+        joint_offset = np.array([0]*self.joint_to_refine+[x[12+self.joint_to_refine]]+[0]*(8-self.joint_to_refine))*10
+        #joint_offset = np.pad(x[13:14]*0, (0, 8), mode='constant')
+        print("joint_offset:", joint_offset * 180 / np.pi)
         for i in range(self.n_poses):
-            T_ct_i =  T_cg * self.T_gb_lst[i] * T_bt
-            n_corner_this_pose = len(self.pts[i]) 
+            new_joint_values = self.joint_values_lst[i] - joint_offset
+            pin.forwardKinematics(self.panda_model, self.panda_data, new_joint_values)
+            eef_pose = pin.updateFramePlacement(self.panda_model, self.panda_data, self.panda_hand_id)
+            #eef_pose = self.panda_data.oMi[7]
+            new_t_bg = np.array(eef_pose.translation)
+            new_R_bg = np.array(eef_pose.rotation)
+            #T_hand = pin.SE3(np.eye(3), np.array([0, 0, -0.0584]))
+            new_T_bg = pin.SE3(new_R_bg, new_t_bg)# * T_hand
+            T_ct_i =  T_cg * new_T_bg.inverse() * T_bt
+
+            n_corner_this_pose = len(self.pts[i])
             for j in range(n_corner_this_pose):
                 rvec = pin.log3(T_ct_i.rotation)
                 tvec = T_ct_i.translation 
@@ -166,8 +190,8 @@ class RefinementRobotWorldHandEye:
     def get_transforms(self, x):
         # Optimization is done on SE(3) 
         # -> use a minimal representation of decision variables as local increments "nu" on se3
-        nu_gc = x[:6]
-        nu_bt = x[6:]
+        nu_gc = x[0:6]
+        nu_bt = x[6:12]
 
         # Recover corresponding transformation matrices
         T_gc = self.T_gc_init * pin.exp6(nu_gc)
@@ -176,13 +200,14 @@ class RefinementRobotWorldHandEye:
         return T_gc, T_bt
 
 
-def refine_eye_in_hand_calibration(T_gc_init, T_bt_init, T_bg_lst, cam_mtx, dist_coef, all_ch_points, all_ch_corners):
-    pbe = RefinementRobotWorldHandEye(T_gc_init, T_bt_init, T_bg_lst, cam_mtx, dist_coef, all_ch_points, all_ch_corners)
-    x0 = np.zeros(12)
-    result = least_squares(fun=pbe.func, x0=x0, jac='2-point', method='trf', verbose=2, xtol=1e-10)
+def refine_eye_in_hand_calibration(T_gc_init, T_bt_init, T_bg_lst, joint_values_lst, cam_mtx, dist_coef, all_ch_points, all_ch_corners, joint_to_refine):
+    pbe = RefinementRobotWorldHandEye(T_gc_init, T_bt_init, T_bg_lst, joint_values_lst, cam_mtx, dist_coef, all_ch_points, all_ch_corners, joint_to_refine)
+    x0 = np.concatenate((np.zeros(12), np.array([0, 0, 0, 0, 0, 0, 0])), axis=0)
+
+    result = least_squares(fun=pbe.func, x0=x0, jac='2-point', method='trf', verbose=1, xtol=8e-3)
 
     T_gc, T_bt = pbe.get_transforms(result.x)
-    return T_gc, T_bt
+    return T_gc, T_bt, np.array([0]*pbe.joint_to_refine+[result.x[12+pbe.joint_to_refine]]+[0]*(8-pbe.joint_to_refine))*10
 
 # def calibrate_RobotWorldHandEye(calibration_data, expe_dir, hand_eye_method=cv2.CALIB_ROBOT_WORLD_HAND_EYE_SHAH):
 #     """

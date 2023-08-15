@@ -32,7 +32,7 @@ import pinocchio as pin
 
 from utils import read_yaml, save_yaml, get_time_str, load_images
 
-from eye_in_hand_calibration import calibrate_eye_in_hand, refine_eye_in_hand_calibration
+from eye_in_hand_calibration_2 import calibrate_eye_in_hand, refine_eye_in_hand_calibration
 
 
 def calibrate(board, hand_eye_method, paths, image_names_ignored=[], use_eye_in_hand_refinement=False):
@@ -63,11 +63,7 @@ def calibrate(board, hand_eye_method, paths, image_names_ignored=[], use_eye_in_
     img_height, img_width = imsize[0], imsize[1]
     # rvecs_ct, tvecs_ct correspond to target2camera transformation in opencv notation convention 
     cam_mtx, dist_coef, rvecs_ct, tvecs_ct = calibrate_camera(all_ch_points, all_ch_corners, imsize)
-    #cam_mtx = np.array([[614.193, 0, 326.268], [0, 614.193, 238.851], [0, 0, 1]])
-    print("cam_mtx:", type(cam_mtx), cam_mtx)
-    print("dist_coef:", type(dist_coef), dist_coef)
-    # print("rvecs_ct:", type(rvecs_ct), rvecs_ct)
-    # print("tvecs_ct:", type(tvecs_ct), tvecs_ct)
+
     # Draw and save charuco detections for all images
     for i, (img_name, img) in enumerate(img_file_map.items()):
         save_charuco_detections(paths['camera_calibration_dir'], img_name, img, 
@@ -93,47 +89,48 @@ def calibrate(board, hand_eye_method, paths, image_names_ignored=[], use_eye_in_
     ################# EYE IN HAND ##################
     ################################################
     # Recover robot kinematics data
-    t_bg_lst, R_bg_lst, T_bg_lst = [], [], []
-    for img_name in img_file_map:
-        # Each image comes with accompanying yaml file with current kinematics information
-        moveit_img_info_path = (paths['data_dir'] / img_name).with_suffix('.yaml')
-        moveit_data = read_yaml(moveit_img_info_path)
 
-        t_bg = np.array(moveit_data['t_vec'])
-        R_bg = np.array(moveit_data['r_mtx'] )[0:3,0:3]
+    urdf_filename = 'panda.urdf'
+    panda_model = pin.buildModelFromUrdf(urdf_filename)
+    panda_data = panda_model.createData()
+    panda_hand_id = panda_model.getFrameId('panda_hand')
 
-        t_bg_lst.append(t_bg)
-        R_bg_lst.append(R_bg)
-        T_bg_lst.append(pin.SE3(R_bg, t_bg))
-    
-    image_names = list(img_file_map.keys())
-    T_gc, T_bt = calibrate_eye_in_hand(rvecs_ct, tvecs_ct, R_bg_lst, t_bg_lst, image_names, paths['eye_in_hand_dir'], hand_eye_method)
-    # print("T_bt::", T_bt)
-    # print("T_gc::", T_gc)
-    # new_R_gc = np.array([[0.707107, 0, 0.707107],
-    #                  [0.707107, 0, -0.707107],
-    #                  [0, 1, 0]])
-    # new_t_gc = np.array([0.01281, -0.05852, 0.016])
-    #
-    # T_gc = pin.SE3(new_R_gc, new_t_gc)
-    #
-    # new_R_bt = np.array([[0, -1, 0],
-    #                   [-1, 0, 0],
-    #                   [0, 0, -1]])
-    # new_t_bt = np.array([1.16, 0.35, 0.01])
-    # T_bt = pin.SE3(new_R_bt, new_t_bt)
-    #
-    # new_R_bt = np.array([[-0.00462, -0.9999, 0.000378],
-    #                  [-0.9999, 0.0046187, -0.00266],
-    #                  [0.002658, -0.000391, -0.99999]])
-    # new_t_bt = np.array([1.15307, 0.34336, 0.018867])
-    #
+    #t_bg_lst, R_bg_lst, T_bg_lst, joint_values_lst = [], [], [], []
+    #joint_values_constant_error = np.ones(7) * (0) * 2 * np.pi / (360)  # (10**8)
+    #joint_values_constant_error = np.array([[0, 0, 0, 0, 0, 0, 0, 0, 0] for row in range(7)]) * np.pi / (180)
+    joint_values_constant_error = np.array([0, 0, 0, 0, 0, 0, 0, 0, 0]) * np.pi / (180)
+    joint_values_offset = np.zeros((7, 9))
+    # joint_values_offset = np.array([[-1.39862106, 0.34266018, -0.26971126, -0.30709986, -0.7931957, 0.34393705, 0.12307712, 0, 0]])
+    # independently:
+    # joint_values_offset = np.array([-0.41895998, 0.2734795, -0.31850354, 0.11493848, -0.90169089, 0.68714468, -0.01627114])
+    #joint_values_constant_error = np.pad(joint_values_constant_error, (0, 2), mode='constant')
+    for j in range(7):
+        for i in range(3):
+            t_bg_lst, R_bg_lst, T_bg_lst, joint_values_lst = [], [], [], []
+            for img_name in img_file_map:
+                moveit_img_info_path = (paths['data_dir'] / img_name).with_suffix('.yaml')
+                moveit_data = read_yaml(moveit_img_info_path)
+                joint_values = np.array(moveit_data['joint_values'][0:7] + [0.0]*2)
+                joint_values = joint_values+joint_values_constant_error-joint_values_offset[j] #  +joint_values_noise
+                pin.forwardKinematics(panda_model, panda_data, joint_values)
+                eef_pose = pin.updateFramePlacement(panda_model, panda_data, panda_hand_id)
 
-    # #print("T_gc:", type(T_gc), T_gc)
-    # if use_eye_in_hand_refinement:
-    #    print('Use refinement step for eye in hand')
-    #    T_gc, T_bt = refine_eye_in_hand_calibration(T_gc, T_bt, T_bg_lst, cam_mtx, dist_coef, all_ch_points, all_ch_corners)
+                new_t_bg = np.array(eef_pose.translation)
+                new_R_bg = np.array(eef_pose.rotation)
+                new_T_bg = pin.SE3(new_R_bg, new_t_bg)#*T_hand
+                t_bg_lst.append(new_T_bg.translation)
+                R_bg_lst.append(new_T_bg.rotation)
+                T_bg_lst.append(new_T_bg)
+                joint_values_lst.append(joint_values)
 
+            image_names = list(img_file_map.keys())
+            T_gc, T_bt = calibrate_eye_in_hand(rvecs_ct, tvecs_ct, R_bg_lst, t_bg_lst, image_names, paths['eye_in_hand_dir'], hand_eye_method)
+            joint_to_refine = j
+            T_gc, T_bt, recovered_joint_offsets = refine_eye_in_hand_calibration(T_gc, T_bt, T_bg_lst, joint_values_lst,
+                                                                                 cam_mtx, dist_coef, all_ch_points, all_ch_corners, joint_to_refine)
+            joint_values_offset[joint_to_refine] += recovered_joint_offsets
+
+        print("joint_values_offset:", joint_values_offset * 180 / (np.pi))
     # Recover camera/target transformation from calibration and kinematics
     rvecs_ct, tvecs_ct = [], []
     T_cg = T_gc.inverse()
@@ -240,14 +237,9 @@ def calibrate_camera(all_points, all_corners, imsize):
 
     # Call opencv calibration routine
     flags = cv2.CALIB_FIX_ASPECT_RATIO
-    # flags += cv2.CALIB_FIX_K1 + cv2.CALIB_FIX_K2 + cv2.CALIB_FIX_K3# + cv2.CALIB_FIX_K4 + cv2.CALIB_FIX_K5
+    # flags += cv2.CALIB_FIX_K1 + cv2.CALIB_FIX_K2 + cv2.CALIB_FIX_K3
     # flags += cv2.CALIB_FIX_TANGENT_DIST
-    # flags += cv2.CALIB_FIX_FOCAL_LENGTH
-    # flags += cv2.CALIB_USE_INTRINSIC_GUESS
-    # flags += cv2.CALIB_FIX_PRINCIPAL_POINT
-    # flags += cv2.CALIB_FIX_FOCAL_LENGTH
     camera_mtx_init = np.eye(3)
-    # camera_mtx_init = np.array([[613.193, 0, 326.268], [0, 613.193, 238.851], [0, 0, 1]])
     # criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 100, 0.00001)
     criteria_intrinsics_solver = (cv2.TERM_CRITERIA_EPS & cv2.TERM_CRITERIA_COUNT, 100, 1e-9)
     # Recover transformations target2camera -> ct 
