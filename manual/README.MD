@@ -45,7 +45,7 @@ touch moveit_tutorials/CATKIN_IGNORE
 
 cd ~/ws_moveit
 catkin config --cmake-args -DCMAKE_BUILD_TYPE=Release
-catkin build
+catkin build # use "catkin build -p 1" on a slow computer to prevent crashes
 ```
 ```
 source ~/ws_moveit/devel/setup.bash
