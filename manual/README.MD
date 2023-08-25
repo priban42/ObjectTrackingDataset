@@ -39,8 +39,11 @@ cd ~/ws_moveit
 mamba env update --file environment_pribavoj.yaml
 
 conda config --env --add channels conda-forge
+
+cd ~/ws_moveit/src
 touch moveit_tutorials/CATKIN_IGNORE
 
+cd ~/ws_moveit
 catkin config --extend /opt/ros/${ROS_DISTRO} --cmake-args -DCMAKE_BUILD_TYPE=Release
 catkin build
 ```
