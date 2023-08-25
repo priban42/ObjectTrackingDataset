@@ -19,6 +19,7 @@ dependencies:
   - ros-noetic-random-numbers
   - ros-noetic-rosparam-shortcuts
   - ros-noetic-pcl-ros
+  - ros-noetic-ompl
   - qhull
   - ros-noetic-ruckig
   - ros-noetic-pybind11-catkin
