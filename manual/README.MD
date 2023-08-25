@@ -44,7 +44,7 @@ cd ~/ws_moveit/src
 touch moveit_tutorials/CATKIN_IGNORE
 
 cd ~/ws_moveit
-catkin config --extend /opt/ros/${ROS_DISTRO} --cmake-args -DCMAKE_BUILD_TYPE=Release
+catkin config --cmake-args -DCMAKE_BUILD_TYPE=Release
 catkin build
 ```
 ```
