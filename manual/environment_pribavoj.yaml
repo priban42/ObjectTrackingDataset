@@ -1,0 +1,30 @@
+channels:
+  - robostack-staging
+  - conda-forge
+dependencies:
+  - python=3.9
+  - compilers 
+  - cmake 
+  - ros-noetic-desktop 
+  - catkin_tools 
+  - ros-noetic-libfranka 
+  - ros-noetic-franka-ros
+  - ros-noetic-realsense2-camera
+  - ros-noetic-object-recognition-msgs
+  - ros-noetic-eigen-stl-containers
+  - ros-noetic-graph-msgs
+  - ros-noetic-octomap-msgs
+  - ros-noetic-tf2-eigen
+  - ros-noetic-octomap
+  - ros-noetic-random-numbers
+  - ros-noetic-rosparam-shortcuts
+  - ros-noetic-pcl-ros
+  - qhull
+  - ros-noetic-ruckig
+  - ros-noetic-pybind11-catkin
+  - ros-noetic-warehouse-ros
+  - mesa-libgl-devel-cos7-x86_64
+  - mesa-dri-drivers-cos7-x86_64
+  - libxcb
+  - glew
+  - eigenpy

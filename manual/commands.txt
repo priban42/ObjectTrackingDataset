@@ -1,0 +1,23 @@
+mamba activate pribavoj
+cd ~/pribavoj_ws_moveit/
+source devel/setup.bash
+
+mamba activate pribavoj;cd ~/pribavoj_ws_moveit/;source devel/setup.bash
+
+realsense-viewer
+
+roslaunch realsense2_camera rs_camera.launch
+roslaunch realsense2_camera rs_aligned_depth.launch
+roslaunch realsense2_camera rs_camera.launch color_width:=1280 color_height:=720
+#path to settings: /home/ros/miniconda3/envs/pribavoj/share/realsense2_camera/launch/rs_camera.launch
+#color_width:=[1280]
+#color_height:=[720]
+rosrun image_view image_view image:=/camera/color/image_raw
+
+python /home/ros/pribavoj_ws_moveit/src/calibration_eyeinhand_ros_pkg/scripts/compute_points_2.py;roslaunch calibration_eyeinhand_ros_pkg panda_data_acquisition.launch
+
+
+roslaunch panda_moveit_config demo.launch
+roslaunch panda_moveit_config franka_control.launch robot_ip:=192.168.102.11
+
+rosbag record /franka_state_controller/joint_states /camera/color/image_raw /camera/color/camera_infocom	
